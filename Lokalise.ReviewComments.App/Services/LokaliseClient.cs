@@ -14,7 +14,7 @@ public class LokaliseClient
     private Dictionary<string, string> cookies = new Dictionary<string, string>
     {
         { "PHPSESSID", "bsbkpnoqdckc215ve1o8esrvst33h8pp" },
-        { "csrf_token", "7YuA05Q-_IftP9EtQ-O-Jka-CvktQNhJavT6LS1KxUo"}
+        { "csrf_token", "WZS733QlSNBo_obgOU5Y8xr-BoViPCCiIhEzLCaYPqQ"}
     };
 
     public async Task<List<Translation>> GetTranslations()

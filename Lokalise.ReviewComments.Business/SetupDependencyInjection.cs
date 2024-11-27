@@ -12,8 +12,9 @@ public static class SetupDependencyInjection
 {
     public static IServiceCollection AddReviewCommentsServices(this IServiceCollection services, IConfiguration config)
     {
-        var lokaliseSettings = config.GetSection("LokaliseSettings").Get<LokaliseSettings>();
         services.Configure<LokaliseSettings>(config.GetSection("LokaliseSettings"));
+
+        var lokaliseSettings = config.GetSection("LokaliseSettings").Get<LokaliseSettings>();
         if(lokaliseSettings is null)
             throw new ArgumentNullException("LokaliseSettings");
         
@@ -37,22 +38,21 @@ public static class SetupDependencyInjection
             // client.DefaultRequestHeaders.Add("content-type", "application/json");
             client.BaseAddress = new Uri(lokaliseSettings.BaseApiUrl);
         });
-        services.AddHttpClient<ILokaliseCookieClient, LokaliseCookieClient>(client =>
-        {
-            client.DefaultRequestHeaders.Add("accept", "*/*");
-            client.DefaultRequestHeaders.Add("x-csrf-token", lokaliseSettings.XCsrfToken);
-            client.BaseAddress = new Uri(lokaliseSettings.BaseCookieUrl);
-        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-        {
-            UseCookies = true,
-            CookieContainer = new CookieContainer().Apply(container =>
-            {
-                foreach (var cookie in lokaliseSettings.Cookies)
-                {
-                    container.Add(new Uri(lokaliseSettings.BaseCookieUrl), 
-                        new Cookie(cookie.Key, cookie.Value) { Domain = lokaliseSettings.AppDomain });
-                }
-            })
-        });
+        // services.AddHttpClient<ILokaliseCookieClient, LokaliseCookieClient>(client =>
+        // {
+        //     client.DefaultRequestHeaders.Add("accept", "*/*");
+        //     client.DefaultRequestHeaders.Add("host", lokaliseSettings.AppDomain);
+        //     // client.DefaultRequestHeaders.Add("x-csrf-token", lokaliseSettings.XCsrfToken);
+        //     client.BaseAddress = new Uri(lokaliseSettings.BaseCookieUrl);
+        //
+        //     var cookieString = "";
+        //     foreach (var cookie in lokaliseSettings.Cookies)
+        //     {
+        //         if(cookieString.Length > 0)
+        //             cookieString += "; ";
+        //         cookieString += $"{cookie.Key}={cookie.Value}";
+        //     }
+        //     client.DefaultRequestHeaders.Add("cookie", cookieString.Trim());
+        // });
     }
 }

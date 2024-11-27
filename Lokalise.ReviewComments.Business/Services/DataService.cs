@@ -24,8 +24,8 @@ public class DataService : IDataService
         throw new NotImplementedException();
     }
 
-    public Task<List<Comment>> GetComments(string projectId)
+    public async Task<List<Comment>> GetComments(string projectId)
     {
-        throw new NotImplementedException();
+        return await _cookieClient.GetComments(projectId);
     }
 }

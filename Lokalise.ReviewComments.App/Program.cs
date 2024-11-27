@@ -1,4 +1,5 @@
-﻿using Lokalise.ReviewComments.Business;
+﻿using Lokalise.ReviewComments.App.Services;
+using Lokalise.ReviewComments.Business;
 using Lokalise.ReviewComments.Business.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,5 +17,9 @@ var host = builder.Build();
 // Get service and run
 var app = host.Services.GetRequiredService<IApp>();
 app.Run();
+
+
+var lokalise = new LokaliseClient();
+var comments = await lokalise.GetComments();
 
 await host.RunAsync();
