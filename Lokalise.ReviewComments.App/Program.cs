@@ -1,51 +1,17 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Lokalise.ReviewComments.Business;
+using Lokalise.ReviewComments.Business.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-using Lokalise.ReviewComments.App.Models;
-using Lokalise.ReviewComments.App.Services;
+var builder = Host.CreateApplicationBuilder(args);
 
-Console.WriteLine("Hello, World!");
+// Register services
+builder.Services.AddReviewCommentsServices();
 
-var lokaliseClient = new LokaliseClient();
-var translations = await lokaliseClient.GetTranslations();
-var languages = Language.Languages;
-var comments = await lokaliseClient.GetComments();
+var host = builder.Build();
 
-await Process();
+// Get service and run
+var app = host.Services.GetRequiredService<IApp>();
+app.Run();
 
-async Task Process()
-{
-    foreach (var comment in comments)
-    {
-        var language = languages.First(x => x.Id == comment.LangId);
-        var translation = translations.First(x => x.KeyId == comment.KeyId && string.Equals(x.LanguageIso, language.ISO));
-
-        var strippedMessage = StripMessage(comment.Message);
-        Console.WriteLine(comment.AttachPointName);
-        Console.WriteLine($"{language.ISO}: {translation.TranslationText}");
-        Console.WriteLine($"{language.ISO}: {strippedMessage}");
-        Console.WriteLine($"{translation.Id}");
-        Console.WriteLine("O for override and any other to skip");
-        var key = Console.ReadKey();
-        Console.WriteLine();
-        if (key.Key == ConsoleKey.O)
-        {
-            var success = await lokaliseClient.UpdateTranslation(translation.Id, strippedMessage);
-            if (success)
-                Console.WriteLine("Translation updated");
-            else 
-                Console.WriteLine("!!! Translation could not be updated");
-            
-            success = await lokaliseClient.ResolveComment(comment.Id, translation.Id);
-            if (success)
-                Console.WriteLine("Comment resolved");
-            else
-                Console.WriteLine("!!! Comment could not be resolved");
-
-        }
-    }
-}
-
-string StripMessage(string message)
-{
-    return message.Substring(3, message.Length - 7);
-}
+await host.RunAsync();
