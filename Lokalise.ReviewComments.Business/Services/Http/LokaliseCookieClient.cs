@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Lokalise.ReviewComments.Business.Interfaces;
 using Lokalise.ReviewComments.Business.Models;
@@ -47,8 +48,27 @@ public class LokaliseCookieClient : ILokaliseCookieClient
         return (result.Comments, result.Meta.Paging.Cursors.After);
     }
 
-    public Task<bool> ResolveComment(string commentId, long translationId, string projectId)
+    public async Task<bool> ResolveComment(string commentId, long translationId, string projectId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var url = $"projects/{projectId}/translations/{translationId}/comments/{commentId}";
+            var body = $$"""{"resolved":true}""";
+            var response = await _client.PatchAsync(url, null);
+            if (response.StatusCode == HttpStatusCode.NotModified)
+                return true;
+            if (response.IsSuccessStatusCode is false)
+            {
+                _logger.LogError("Failed to resolve comment {commentId} for translation {translationId} in Lokalise", commentId, translationId);
+                return false;                    
+            }
+            
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Failed to resolve comment {commentId} for translation {translationId} in Lokalise", commentId, translationId);
+            return false;
+        }
     }
 }

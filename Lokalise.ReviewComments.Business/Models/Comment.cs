@@ -56,8 +56,8 @@ public class Comment
     public string ThreadId { get; set; }
 
     [JsonPropertyName("keyId")]
-    public long KeyId { get; set; }
+    public long? KeyId { get; set; }
 
     [JsonPropertyName("langId")]
-    public int LangId { get; set; }
+    public int? LangId { get; set; }
 }

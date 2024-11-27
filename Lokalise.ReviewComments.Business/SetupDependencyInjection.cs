@@ -42,7 +42,7 @@ public static class SetupDependencyInjection
         {
             client.DefaultRequestHeaders.Add("accept", "*/*");
             client.DefaultRequestHeaders.Add("host", lokaliseSettings.AppDomain);
-            // client.DefaultRequestHeaders.Add("x-csrf-token", lokaliseSettings.XCsrfToken);
+            client.DefaultRequestHeaders.Add("x-csrf-token", lokaliseSettings.XCsrfToken);
             client.BaseAddress = new Uri(lokaliseSettings.BaseCookieUrl);
 
             var cookieString = "";
