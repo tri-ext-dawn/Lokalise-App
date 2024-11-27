@@ -27,8 +27,10 @@ public class App : IApp
         _commandService = commandService;
     }
     
-    public Task Run()
+    public async Task Run()
     {
+        var translations = await _dataService.GetTranslations(665, "3174716666ba0500034d17.77744948");
+        
         throw new NotImplementedException();
     }
 }

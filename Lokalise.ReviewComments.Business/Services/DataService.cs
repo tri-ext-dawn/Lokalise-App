@@ -16,7 +16,7 @@ public class DataService : IDataService
     
     public Task<List<Translation>> GetTranslations(long languageId, string projectId)
     {
-        throw new NotImplementedException();
+        return _apiClient.GetTranslations(languageId, projectId);
     }
 
     public Task<Language> GetLanguages(string projectId)

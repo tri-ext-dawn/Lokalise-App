@@ -33,7 +33,7 @@ public static class SetupDependencyInjection
         services.AddHttpClient<ILokaliseApiClient, LokaliseApiClient>(client =>
         {
             client.DefaultRequestHeaders.Add("X-Api-Token", lokaliseSettings.ApiToken);
-            client.DefaultRequestHeaders.Add("accept", "application/json");
+            // client.DefaultRequestHeaders.Add("accept", "application/json");
             // client.DefaultRequestHeaders.Add("content-type", "application/json");
             client.BaseAddress = new Uri(lokaliseSettings.BaseApiUrl);
         });
