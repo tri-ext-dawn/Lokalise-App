@@ -17,7 +17,7 @@ public class LokaliseCookieClientTests_GetComments : LokaliseCookieClientTests
     {
         base.Setup();
         _projectId = "7209912665b2702bce4eb3.46260463";
-        _baseUrl = $"collaboration/projects/{_projectId}/comments?filter-resolved=0";
+        _baseUrl = $"projects/{_projectId}/comments?filter-resolved=0";
     }
 
     [Test]
@@ -65,7 +65,7 @@ public class LokaliseCookieClientTests_GetComments : LokaliseCookieClientTests
         // Assert
         Assert.That(result, Has.Count.EqualTo(4));
         VerifyHttpRequest(_baseUrl, Times.Once());
-        VerifyHttpRequest("nextPageToken", Times.Once());
+        VerifyHttpRequest($"projects/{_projectId}/comments?page%5Bafter%5D={"nextPageToken"}&filter-resolved=0", Times.Once());
     }
 
     [Test]

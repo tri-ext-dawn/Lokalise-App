@@ -38,21 +38,21 @@ public static class SetupDependencyInjection
             // client.DefaultRequestHeaders.Add("content-type", "application/json");
             client.BaseAddress = new Uri(lokaliseSettings.BaseApiUrl);
         });
-        // services.AddHttpClient<ILokaliseCookieClient, LokaliseCookieClient>(client =>
-        // {
-        //     client.DefaultRequestHeaders.Add("accept", "*/*");
-        //     client.DefaultRequestHeaders.Add("host", lokaliseSettings.AppDomain);
-        //     // client.DefaultRequestHeaders.Add("x-csrf-token", lokaliseSettings.XCsrfToken);
-        //     client.BaseAddress = new Uri(lokaliseSettings.BaseCookieUrl);
-        //
-        //     var cookieString = "";
-        //     foreach (var cookie in lokaliseSettings.Cookies)
-        //     {
-        //         if(cookieString.Length > 0)
-        //             cookieString += "; ";
-        //         cookieString += $"{cookie.Key}={cookie.Value}";
-        //     }
-        //     client.DefaultRequestHeaders.Add("cookie", cookieString.Trim());
-        // });
+        services.AddHttpClient<ILokaliseCookieClient, LokaliseCookieClient>(client =>
+        {
+            client.DefaultRequestHeaders.Add("accept", "*/*");
+            client.DefaultRequestHeaders.Add("host", lokaliseSettings.AppDomain);
+            // client.DefaultRequestHeaders.Add("x-csrf-token", lokaliseSettings.XCsrfToken);
+            client.BaseAddress = new Uri(lokaliseSettings.BaseCookieUrl);
+
+            var cookieString = "";
+            foreach (var cookie in lokaliseSettings.Cookies)
+            {
+                if(cookieString.Length > 0)
+                    cookieString += "; ";
+                cookieString += $"{cookie.Key}={cookie.Value}";
+            }
+            client.DefaultRequestHeaders.Add("cookie", cookieString.Trim());
+        });
     }
 }
