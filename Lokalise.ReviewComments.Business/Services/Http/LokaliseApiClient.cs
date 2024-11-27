@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using Lokalise.ReviewComments.Business.Interfaces;
 using Lokalise.ReviewComments.Business.Models;
@@ -33,9 +34,17 @@ public class LokaliseApiClient : ILokaliseApiClient
         }
     }
 
-    public Task<bool> UpdateTranslation(long translationId, string translation, string projectId)
+    public async Task<bool> UpdateTranslation(long translationId, string translation, string projectId)
     {
-        throw new NotImplementedException();
+        var url = $"projects/{projectId}/translations/{translationId}";
+        var content = $$"""{"translation":"{{translation}}","is_unverified":false,"is_reviewed":true}""";
+        var response = await _client.PutAsync(url, new StringContent(content, System.Text.Encoding.UTF8, "application/json"));
+        if (response.IsSuccessStatusCode is false)
+        {
+            _logger.LogError("Failed to update translation {translationId} in Lokalise with new value '{translation}'", translationId, translation);
+            return false;
+        }
+        return true;
     }
 
     public Task<Language> GetLanguages(string projectId)
