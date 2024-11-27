@@ -47,8 +47,20 @@ public class LokaliseApiClient : ILokaliseApiClient
         return true;
     }
 
-    public Task<Language> GetLanguages(string projectId)
+    public async Task<List<Language>> GetLanguages(string projectId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var url = $"projects/{projectId}/languages";
+            var response = await _client.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            var languages = JsonSerializer.Deserialize<LanguagesData>(content).Languages;
+            return languages;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Failed to get languages from Lokalise");
+            throw new HttpRequestException("Failed to get languages", e);
+        }
     }
 }

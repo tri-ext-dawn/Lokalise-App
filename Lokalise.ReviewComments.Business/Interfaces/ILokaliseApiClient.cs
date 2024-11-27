@@ -6,5 +6,5 @@ public interface ILokaliseApiClient
 {
     Task<List<Translation>> GetTranslations(long languageId, string projectId);
     Task<bool> UpdateTranslation(long translationId, string translation, string projectId);
-    Task<Language> GetLanguages(string projectId);
+    Task<List<Language>> GetLanguages(string projectId);
 }
