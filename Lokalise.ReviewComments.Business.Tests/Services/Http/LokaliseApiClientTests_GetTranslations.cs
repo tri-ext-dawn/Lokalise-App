@@ -2,32 +2,110 @@ using System.Net;
 using System.Net.Http.Json;
 using AutoFixture;
 using FluentAssertions;
+using Lokalise.ReviewComments.Business.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
 namespace Lokalise.ReviewComments.Business.Tests.Services.Http;
 
+/// <summary>
+/// Tests for the translation retrieval functionality of the Lokalise API client
+/// </summary>
+[TestFixture]
 public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
 {
+    private const string DefaultProjectId = "test-project-id";
+    private const long DefaultLanguageId = 12345L;
+    private const string DefaultLanguageIso = "en-US";
+    private const string DefaultTranslationText = "Test Translation";
+    
+    private TranslationResponse _defaultTranslation;
+    private string _expectedUrl;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _defaultTranslation = CreateDefaultTranslation();
+        _expectedUrl = $"projects/{DefaultProjectId}/translations?filter_lang_id={DefaultLanguageId}&limit=2000&page=1";
+    }
+
     [Test]
-    public async Task GetTranslations_Success_ReturnsTranslations()
+    [Category("Happy Path")]
+    public async Task GetTranslations_WhenValidRequestMade_ReturnsExpectedTranslations()
     {
         // Arrange
-        var projectId = "test-project";
-        var languageId = 123L;
-        var expectedUrl = $"projects/{projectId}/translations?filter_lang_id={languageId}&limit=2000&page=1";
-        var translation = _fixture.Create<TranslationResponse>();
+        SetupSuccessfulHttpResponse(_defaultTranslation);
 
-        var response = new LokaliseTranslationsResponse
+        // Act
+        var result = await _sut.GetTranslations(DefaultLanguageId, DefaultProjectId);
+
+        // Assert
+        VerifyTranslationResponse(result, _defaultTranslation);
+        VerifyHttpRequest();
+    }
+
+    [Test]
+    [Category("Error Handling")]
+    public async Task GetTranslations_WhenHttpRequestFails_LogsErrorAndThrowsException()
+    {
+        // Arrange
+        SetupFailedHttpResponse(HttpStatusCode.InternalServerError);
+
+        // Act & Assert
+        var exception = Assert.ThrowsAsync<HttpRequestException>(
+            async () => await _sut.GetTranslations(DefaultLanguageId, DefaultProjectId));
+        
+        exception.Should().NotBeNull();
+        VerifyLog(LogLevel.Error, "Failed to get translations from Lokalise");
+    }
+
+    [Test]
+    [Category("Error Handling")]
+    public async Task GetTranslations_WhenEmptyResponseReceived_ReturnsEmptyList()
+    {
+        // Arrange
+        var emptyResponse = new LokaliseTranslationsResponse
         {
-            project_id = projectId,
-            translations = new List<TranslationResponse>
-            {
-                translation
-            }
+            project_id = DefaultProjectId,
+            translations = new List<TranslationResponse>()
         };
 
+        SetupHttpResponseWithContent(emptyResponse);
+
+        // Act
+        var result = await _sut.GetTranslations(DefaultLanguageId, DefaultProjectId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
+
+    private TranslationResponse CreateDefaultTranslation()
+    {
+        return new TranslationResponse
+        {
+            translation_id = _fixture.Create<long>(),
+            language_iso = DefaultLanguageIso,
+            translation = DefaultTranslationText,
+            is_reviewed = true,
+            is_unverified = false
+        };
+    }
+
+    private void SetupSuccessfulHttpResponse(TranslationResponse translation)
+    {
+        var response = new LokaliseTranslationsResponse
+        {
+            project_id = DefaultProjectId,
+            translations = new List<TranslationResponse> { translation }
+        };
+
+        SetupHttpResponseWithContent(response);
+    }
+
+    private void SetupHttpResponseWithContent<T>(T content)
+    {
         _mockHttpMessageHandler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -38,38 +116,12 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(response)
+                Content = JsonContent.Create(content)
             });
-
-        // Act
-        var result = await _sut.GetTranslations(languageId, projectId);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result[0].Id.Should().Be(translation.translation_id);
-        result[0].LanguageIso.Should().Be(translation.language_iso);
-        result[0].TranslationText.Should().Be(translation.translation);
-        result[0].IsReviewed.Should().Be(translation.is_reviewed);
-        result[0].IsUnverified.Should().Be(translation.is_unverified);
-        
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Get && 
-                req.RequestUri.ToString().Contains(expectedUrl)),
-            ItExpr.IsAny<CancellationToken>()
-        );
     }
 
-    [Test]
-    public async Task GetTranslations_WhenRequestFails_LogsErrorAndThrowsException()
+    private void SetupFailedHttpResponse(HttpStatusCode statusCode)
     {
-        // Arrange
-        var projectId = "test-project";
-        var languageId = 123L;
-
         _mockHttpMessageHandler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -79,16 +131,38 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
             )
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.InternalServerError
+                StatusCode = statusCode
             });
-
-        // Act
-        var exception = Assert.ThrowsAsync<HttpRequestException>(() => _sut.GetTranslations(languageId, projectId));
-
-        // Assert
-        VerifyLog(LogLevel.Error, "Failed to get translations from Lokalise");
     }
-    
+
+    private void VerifyTranslationResponse(IReadOnlyList<Translation> result, TranslationResponse expected)
+    {
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+
+        var translation = result[0];
+        translation.Should().BeEquivalentTo(new
+        {
+            Id = expected.translation_id,
+            LanguageIso = expected.language_iso,
+            TranslationText = expected.translation,
+            IsReviewed = expected.is_reviewed,
+            IsUnverified = expected.is_unverified
+        });
+    }
+
+    private void VerifyHttpRequest()
+    {
+        _mockHttpMessageHandler.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Method == HttpMethod.Get &&
+                req.RequestUri.ToString().Contains(_expectedUrl)),
+            ItExpr.IsAny<CancellationToken>()
+        );
+    }
+
     private class LokaliseTranslationsResponse
     {
         public string project_id { get; set; }

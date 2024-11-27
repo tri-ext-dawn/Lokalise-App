@@ -7,130 +7,140 @@ using Moq.Protected;
 
 namespace Lokalise.ReviewComments.Business.Tests.Services.Http;
 
+[TestFixture]
+[Category("Integration")]
 public class LokaliseApiClientTests_UpdateTranslation : LokaliseApiClientTests
 {
-    // Tests for Task<bool> UpdateTranslation(long translationId, string translation, string projectId)
-    //  - Should call Lokalise API to update translation
-    //  - Should return true if translation was updated successfully
-    //  - Should return false if translation was not updated successfully
-    //  - Should log error if translation was not updated successfully
-    //  - Should not throw HttpRequestException if translation was not updated successfully
-    
-    private readonly string _projectId = "123456";
-    private readonly long _translationId = 789;
-    private readonly string _translation = "Updated translation";
+    private const string TestProjectId = "123456";
+    private const long TestTranslationId = 789;
+    private const string TestTranslation = "Updated translation";
+    private const string ExpectedJsonBody = """{"translation":"Updated translation","is_unverified":false,"is_reviewed":true}""";
+
+    private string ExpectedUrl => $"projects/{TestProjectId}/translations/{TestTranslationId}";
+    private HttpResponseMessage SuccessResponse => new()
+    {
+        StatusCode = HttpStatusCode.OK,
+        Content = JsonContent.Create(new { })
+    };
+
+    [SetUp]
+    public void SetUp()
+    {
+        SetupDefaultHttpHandler();
+    }
+
+    private void SetupDefaultHttpHandler(HttpStatusCode statusCode = HttpStatusCode.OK)
+    {
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = statusCode,
+                Content = JsonContent.Create(new { })
+            });
+    }
 
     [Test]
-    public async Task UpdateTranslation_ShouldCallApiAndReturnTrue_WhenSuccessful()
+    public async Task UpdateTranslation_WithValidRequest_ShouldSucceed()
     {
         // Arrange
-        var expectedUrl = $"projects/{_projectId}/translations/{_translationId}";
+        SetupHttpHandlerForSuccessfulRequest();
+
+        // Act
+        var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
+
+        // Assert
+        result.Should().BeTrue("because the API call was successful");
+        VerifyApiWasCalled();
+    }
+
+    [Test]
+    public async Task UpdateTranslation_WithValidRequest_ShouldSendCorrectRequestBody()
+    {
+        // Arrange
+        SetupDefaultHttpHandler();
+
+        // Act
+        var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
+
+        // Assert
+        result.Should().BeTrue();
+        VerifyRequestBody();
+    }
+
+    [Test]
+    public async Task UpdateTranslation_WhenApiFails_ShouldReturnFalse()
+    {
+        // Arrange
+        SetupDefaultHttpHandler(HttpStatusCode.BadRequest);
+
+        // Act
+        var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
+
+        // Assert
+        result.Should().BeFalse("because the API returned a failure status code");
+    }
+
+    [Test]
+    public async Task UpdateTranslation_WhenApiFails_ShouldLogError()
+    {
+        // Arrange
+        SetupDefaultHttpHandler(HttpStatusCode.BadRequest);
+
+        // Act
+        await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
+
+        // Assert
+        VerifyErrorWasLogged();
+    }
+
+    private void SetupHttpHandlerForSuccessfulRequest()
+    {
         _mockHttpMessageHandler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.Is<HttpRequestMessage>(req => 
                     req.Method == HttpMethod.Put && 
-                    // req.Content.Equals($$"""{"translation":"{{_translation}}","is_unverified":false,"is_reviewed":true}""")
-                    req.RequestUri!.ToString().Contains(expectedUrl)),
+                    req.RequestUri!.ToString().Contains(ExpectedUrl)),
                 ItExpr.IsAny<CancellationToken>()
             )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(new { })
-            });
+            .ReturnsAsync(SuccessResponse);
+    }
 
-        // Act
-        var result = await _sut.UpdateTranslation(_translationId, _translation, _projectId);
-
-        // Assert
-        result.Should().BeTrue();
+    private void VerifyApiWasCalled()
+    {
         _mockHttpMessageHandler.Protected().Verify(
             "SendAsync",
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(req => 
                 req.Method == HttpMethod.Put &&
-                req.RequestUri!.ToString().Contains(expectedUrl)),
+                req.RequestUri!.ToString().Contains(ExpectedUrl)),
             ItExpr.IsAny<CancellationToken>()
         );
     }
 
-    [Test]
-    public async Task UpdateTranslation_ShouldCallApi_WithCorrectBody()
+    private void VerifyRequestBody()
     {
-        // Arrange
-        var expectedBody = $$"""{"translation":"{{_translation}}","is_unverified":false,"is_reviewed":true}""";
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(new { })
-            });
-
-        // Act
-        var result = await _sut.UpdateTranslation(_translationId, _translation, _projectId);
-
-        // Assert
-        result.Should().BeTrue();
         _mockHttpMessageHandler.Protected().Verify(
             "SendAsync",
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(req => 
-                req.Content.ReadAsStringAsync().Result.Equals(expectedBody)),
+                req.Content.ReadAsStringAsync().Result.Equals(ExpectedJsonBody)),
             ItExpr.IsAny<CancellationToken>()
         );
     }
 
-    [Test]
-    public async Task UpdateTranslation_ShouldReturnFalse_WhenUpdateFails()
+    private void VerifyErrorWasLogged()
     {
-        // Arrange
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.BadRequest
-            });
-
-        // Act
-        var result = await _sut.UpdateTranslation(_translationId, _translation, _projectId);
-
-        // Assert
-        result.Should().BeFalse();
-    }
-
-    [Test]
-    public async Task UpdateTranslation_ShouldLogError_WhenUpdateFails()
-    {
-        // Arrange
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.BadRequest
-            });
-
-        // Act
-        await _sut.UpdateTranslation(_translationId, _translation, _projectId);
-
-        // Assert
-        VerifyLog(LogLevel.Error, $"Failed to update translation {_translationId} in Lokalise with new value '{_translation}'");
+        VerifyLog(
+            LogLevel.Error, 
+            $"Failed to update translation {TestTranslationId} in Lokalise with new value '{TestTranslation}'"
+        );
     }
 }
