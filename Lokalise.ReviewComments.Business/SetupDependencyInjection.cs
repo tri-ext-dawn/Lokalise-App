@@ -13,10 +13,14 @@ public static class SetupDependencyInjection
     public static IServiceCollection AddReviewCommentsServices(this IServiceCollection services, IConfiguration config)
     {
         services.Configure<LokaliseSettings>(config.GetSection("LokaliseSettings"));
+        services.Configure<WorkflowSettings>(config.GetSection("WorkflowSettings"));
 
         var lokaliseSettings = config.GetSection("LokaliseSettings").Get<LokaliseSettings>();
         if(lokaliseSettings is null)
             throw new ArgumentNullException("LokaliseSettings");
+        var workflowSettings = config.GetSection("WorkflowSettings").Get<LokaliseSettings>();
+        if(workflowSettings is null)
+            throw new ArgumentNullException("WorkflowSettings");
         
         services.AddTransient<IApp, App>();
         services.AddTransient<ICommandService, CommandService>();
@@ -24,6 +28,7 @@ public static class SetupDependencyInjection
         services.AddTransient<ILokaliseApiClient, LokaliseApiClient>();
         services.AddTransient<ILokaliseCookieClient, LokaliseCookieClient>();
         services.AddTransient<IUserInteractionService, UserInteractionService>();
+        services.AddTransient<IWorkflowService, WorkflowService>();
         
         SetupHttp(services, lokaliseSettings);
         return services;

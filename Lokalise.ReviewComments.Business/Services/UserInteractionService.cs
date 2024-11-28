@@ -15,4 +15,16 @@ public class UserInteractionService : IUserInteractionService
     {
         Console.WriteLine(message);
     }
+
+    public int ReadNumber()
+    {
+        var input = Console.ReadLine();
+        if(int.TryParse(input, out var number))
+        {
+            return number;
+        }
+        
+        PrintLine("Invalid input. Please enter a number.");
+        return ReadNumber();
+    }
 }

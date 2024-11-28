@@ -19,29 +19,29 @@ public class App : IApp
 {
     
     private readonly IDataService _dataService;
-    private readonly ICommandService _commandService;
+    private readonly IWorkflowService _workflowService;
 
-    public App(IDataService dataService, ICommandService commandService)
+    public App(IDataService dataService, IWorkflowService workflowService)
     {
         _dataService = dataService;
-        _commandService = commandService;
+        _workflowService = workflowService;
     }
     
     public async Task Run()
     {
-        var projectId = "3174716666ba0500034d17.77744948";
-        var languageId = 665;
-        var translationId = 4850905278L;
-        
-        var translations = await _dataService.GetTranslations(languageId, projectId);
-        var languages = await _dataService.GetLanguages(projectId);
-        var comments = await _dataService.GetComments(projectId);
+        var projectId = await _workflowService.SelectProject();
 
-        var comment = comments.First();
-        var translation = translations.First(x => x.Id == translationId);
-        var updated = await _commandService.UpdateTranslation(translation.Id, comment.Message, projectId);
-        var resolved = await _commandService.ResolveComment(comment.Id, translation.Id, projectId);
+        var languages = await _dataService.GetLanguages(projectId);
+        var language = await _workflowService.SelectLanguage(languages);
         
-        throw new NotImplementedException();
+        var translations = await _dataService.GetTranslations(language.Id, projectId);
+        
+        var allComments = await _dataService.GetComments(projectId);
+        var comments = allComments.Where(c => translations.Any(t => t.KeyId == c.KeyId)).ToList();
+
+        foreach (var comment in comments)
+        {
+            await _workflowService.ProcessComment(comment);
+        }
     }
 }
