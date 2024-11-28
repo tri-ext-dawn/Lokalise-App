@@ -38,6 +38,7 @@ public class WorkflowService : IWorkflowService
 
     public Task<Language> SelectLanguage(List<Language> languages)
     {
+        languages.Sort();
         _userInteractionService.PrintLine("Select language:");
         foreach (var language in languages)
         {
