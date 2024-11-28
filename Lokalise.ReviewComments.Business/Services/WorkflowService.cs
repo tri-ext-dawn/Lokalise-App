@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.RegularExpressions;
 using Lokalise.ReviewComments.Business.Interfaces;
 using Lokalise.ReviewComments.Business.Models;
@@ -94,13 +95,19 @@ public class WorkflowService : IWorkflowService
 
     private List<string> GetCommentLines(string message)
     {
+        var decodedMessage = DecodeHtmlEntities(message);
         var regEx = new Regex("(<p>.*?<\\/p>)");
-        var matches = regEx.Matches(message);
+        var matches = regEx.Matches(decodedMessage);
         var lines = matches.Select(x => x.Value.Substring(3, x.Value.Length - 7)).ToList();
         return lines;
     }
+    
+    public string DecodeHtmlEntities(string input)
+    {
+        return WebUtility.HtmlDecode(input);
+    }
 
-    private List<string> PrintComment(List<string> lines)
+    private void PrintComment(List<string> lines)
     {
         _userInteractionService.PrintLine("");
         _userInteractionService.PrintLine($"Comment:");
@@ -110,7 +117,6 @@ public class WorkflowService : IWorkflowService
             _userInteractionService.PrintLine(line);
         }
         _userInteractionService.PrintLine($"--------------------");
-        return lines;
     }
 
     private void PrintTranslation(string message)

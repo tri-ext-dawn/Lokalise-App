@@ -40,7 +40,7 @@ public class App : IApp
         var translations = await _dataService.GetTranslations(language.Id, projectId);
         
         var allComments = await _dataService.GetComments(projectId);
-        var comments = allComments.Where(c => translations.Any(t => t.KeyId == c.KeyId)).ToList();
+        var comments = allComments.Where(c => c.LangId == language.Id && translations.Any(t => t.KeyId == c.KeyId)).ToList();
 
         for (int i = 0; i < comments.Count; i++)
         {

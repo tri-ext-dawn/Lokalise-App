@@ -12,10 +12,10 @@ public class WorkflowServiceTests_ProcessComment : WorkflowServiceTests
 T\n
 
 TLine 4";
-    private string _commentMessage = "<p>CLine 1</p><p>C\\n</p><p></p><p>CLine 4</p>";
+    private string _commentMessage = "<p>CLine 1</p><p>C\\n</p><p>&gt;</p><p>CLine 4</p>";
     private string _expectedMessage = @"CLine 1
 C\n
-
+>
 CLine 4";
     private string _projectId = "1234.1234";
     
