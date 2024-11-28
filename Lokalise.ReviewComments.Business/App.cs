@@ -33,6 +33,7 @@ public class App : IApp
     {
         var projectId = await _workflowService.SelectProject();
 
+        _userInteractionService.PrintLine("");
         var languages = await _dataService.GetLanguages(projectId);
         var language = await _workflowService.SelectLanguage(languages);
         
@@ -43,10 +44,12 @@ public class App : IApp
 
         for (int i = 0; i < comments.Count; i++)
         {
+            _userInteractionService.PrintLine("");
+            _userInteractionService.PrintLine("");
             var comment = comments[i];
             var translation = translations.First(t => t.KeyId == comment.KeyId);
             
-            _userInteractionService.PrintLine($"({i+1}/{comments.Count})");
+            _userInteractionService.PrintLine($"=== {i+1}/{comments.Count} ===");
             await _workflowService.ProcessComment(comment, translation);
         }
     }
