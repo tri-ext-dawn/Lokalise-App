@@ -1,8 +1,11 @@
+using System.Net;
+using System.Text;
 using AutoFixture;
 using Lokalise.ReviewComments.Business.Interfaces;
 using Lokalise.ReviewComments.Business.Services.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.Protected;
 
 namespace Lokalise.ReviewComments.Business.Tests.Services.Http;
 
@@ -31,5 +34,44 @@ public class LokaliseCookieClientTests
     public void TearDown()
     {
         _httpClient.Dispose();
+    }
+
+    protected void SetupHttpMessageHandler(HttpStatusCode statusCode, string content = "")
+    {
+        _mockHttpMessageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = statusCode,
+                Content = new StringContent(content, Encoding.UTF8, "application/json")
+            });
+    }
+
+    protected void SetupHttpMessageHandlerToThrow(Exception exception)
+    {
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ThrowsAsync(exception);
+    }
+
+    protected void VerifyHttpRequest(string url, HttpMethod method, Times times)
+    {
+        _mockHttpMessageHandler.Protected().Verify(
+            "SendAsync",
+            times,
+            ItExpr.Is<HttpRequestMessage>(req => 
+                req.Method == method && 
+                req.RequestUri.ToString().Contains(url)),
+            ItExpr.IsAny<CancellationToken>()
+        );
     }
 }

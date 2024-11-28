@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -34,14 +35,7 @@ public class LokaliseCookieClientTests_ResolveComment : LokaliseCookieClientTest
         var result = await _sut.ResolveComment(CommentId, TranslationId, ProjectId);
 
         // Assert
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req =>
-                req.Method == HttpMethod.Patch &&
-                req.RequestUri.ToString().Contains($"projects/{ProjectId}/translations/{TranslationId}/comments/{CommentId}")),
-            ItExpr.IsAny<CancellationToken>()
-        );
+        VerifyHttpRequest($"projects/{ProjectId}/translations/{TranslationId}/comments/{CommentId}", HttpMethod.Patch, Times.Once());
     }
 
     [Test]
@@ -89,33 +83,5 @@ public class LokaliseCookieClientTests_ResolveComment : LokaliseCookieClientTest
         // Assert
         Assert.That(result, Is.False);
         VerifyLog(LogLevel.Error, $"Failed to resolve comment {CommentId} for translation {TranslationId} in Lokalise");
-    }
-
-    private void SetupHttpMessageHandler(HttpStatusCode statusCode, string responseBody = "")
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = statusCode,
-                Content = new StringContent(responseBody)
-            });
-    }
-
-    private void SetupHttpMessageHandlerToThrow(Exception exception)
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ThrowsAsync(exception);
     }
 }
