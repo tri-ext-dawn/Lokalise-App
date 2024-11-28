@@ -36,9 +36,15 @@ public class LokaliseApiClient : ILokaliseApiClient
 
     public async Task<bool> UpdateTranslation(long translationId, string translation, string projectId)
     {
+        var payload = new
+        {
+            translation = translation,
+            is_unverified = false,
+            is_reviewed = true
+        };
+        
         var url = $"projects/{projectId}/translations/{translationId}";
-        var content = $$"""{"translation":"{{translation}}","is_unverified":false,"is_reviewed":true}""";
-        var response = await _client.PutAsync(url, new StringContent(content, System.Text.Encoding.UTF8, "application/json"));
+        var response = await _client.PutAsync(url, JsonContent.Create(payload));
         if (response.IsSuccessStatusCode is false)
         {
             _logger.LogError("Failed to update translation {translationId} in Lokalise with new value '{translation}'", translationId, translation);
