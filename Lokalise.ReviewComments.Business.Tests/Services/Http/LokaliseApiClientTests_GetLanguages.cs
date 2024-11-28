@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using AutoFixture;
 using FluentAssertions;
 using Lokalise.ReviewComments.Business.Models;
@@ -37,7 +38,7 @@ public class LokaliseApiClientTests_GetLanguages : LokaliseApiClientTests
     {
         // Arrange
         var expectedItem = DeepClone(_expectedResponse.languages.First());
-        SetupHttpResponseWithContent(_expectedResponse);
+        SetupHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(_expectedResponse));
 
         // Act
         var result = await _sut.GetLanguages(_projectId);
@@ -51,7 +52,7 @@ public class LokaliseApiClientTests_GetLanguages : LokaliseApiClientTests
     public async Task GetLanguages_FailedRequest_ThrowsAndLogsError()
     {
         // Arrange
-        SetupFailedHttpResponse(HttpStatusCode.InternalServerError);
+        SetupHttpMessageHandler(HttpStatusCode.InternalServerError);
 
         // Act
         var act = () => _sut.GetLanguages(_projectId);
@@ -66,54 +67,13 @@ public class LokaliseApiClientTests_GetLanguages : LokaliseApiClientTests
     public async Task GetLanguages_ValidRequest_CallsCorrectEndpoint()
     {
         // Arrange
-        var response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = JsonContent.Create(_expectedResponse)
-        };
-
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(response);
+        SetupHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(_expectedResponse));
 
         // Act
         await _sut.GetLanguages(_projectId);
 
         // Assert
-        VerifyHttpRequest();
-    }
-
-    private void SetupFailedHttpResponse(HttpStatusCode statusCode)
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = statusCode
-            });
-    }
-
-    private void SetupHttpResponseWithContent<T>(T content)
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(content)
-            });
+        VerifyHttpRequest($"projects/{_projectId}/languages", HttpMethod.Get, Times.Once());
     }
 
     private void VerifyLanguage(Language result, Language expectedItem)
@@ -121,17 +81,5 @@ public class LokaliseApiClientTests_GetLanguages : LokaliseApiClientTests
         result.Should().NotBeNull();
         result.ISO.Should().Be(expectedItem.ISO);
         result.Name.Should().Be(expectedItem.Name);
-    }
-
-    private void VerifyHttpRequest()
-    {
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Get && 
-                req.RequestUri.ToString().Contains($"projects/{_projectId}/languages")),
-            ItExpr.IsAny<CancellationToken>()
-        );
     }
 }

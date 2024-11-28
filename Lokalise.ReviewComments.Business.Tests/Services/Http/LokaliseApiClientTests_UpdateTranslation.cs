@@ -17,11 +17,6 @@ public class LokaliseApiClientTests_UpdateTranslation : LokaliseApiClientTests
     private const string ExpectedJsonBody = """{"translation":"Updated translation","is_unverified":false,"is_reviewed":true}""";
 
     private string ExpectedUrl => $"projects/{TestProjectId}/translations/{TestTranslationId}";
-    private HttpResponseMessage SuccessResponse => new()
-    {
-        StatusCode = HttpStatusCode.OK,
-        Content = JsonContent.Create(new { })
-    };
 
     [SetUp]
     public void SetUp()
@@ -49,98 +44,53 @@ public class LokaliseApiClientTests_UpdateTranslation : LokaliseApiClientTests
     public async Task UpdateTranslation_WithValidRequest_ShouldSucceed()
     {
         // Arrange
-        SetupHttpHandlerForSuccessfulRequest();
-
-        // Act
-        var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
-
-        // Assert
-        result.Should().BeTrue("because the API call was successful");
-        VerifyApiWasCalled();
-    }
-
-    [Test]
-    public async Task UpdateTranslation_WithValidRequest_ShouldSendCorrectRequestBody()
-    {
-        // Arrange
-        SetupDefaultHttpHandler();
+        SetupHttpMessageHandler(HttpStatusCode.OK);
 
         // Act
         var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
 
         // Assert
         result.Should().BeTrue();
-        VerifyRequestBody();
+        VerifyHttpRequest(ExpectedUrl, HttpMethod.Put, Times.Once());
+    }
+
+    [Test]
+    public async Task UpdateTranslation_WithValidRequest_ShouldSendCorrectRequestBody()
+    {
+        // Arrange
+        SetupHttpMessageHandler(HttpStatusCode.OK);
+
+        // Act
+        var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
+
+        // Assert
+        result.Should().BeTrue();
+        VerifyRequestBody(ExpectedJsonBody);
     }
 
     [Test]
     public async Task UpdateTranslation_WhenApiFails_ShouldReturnFalse()
     {
         // Arrange
-        SetupDefaultHttpHandler(HttpStatusCode.BadRequest);
+        SetupHttpMessageHandler(HttpStatusCode.BadRequest);
 
         // Act
         var result = await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
 
         // Assert
-        result.Should().BeFalse("because the API returned a failure status code");
+        result.Should().BeFalse();
     }
 
     [Test]
     public async Task UpdateTranslation_WhenApiFails_ShouldLogError()
     {
         // Arrange
-        SetupDefaultHttpHandler(HttpStatusCode.BadRequest);
+        SetupHttpMessageHandler(HttpStatusCode.BadRequest);
 
         // Act
         await _sut.UpdateTranslation(TestTranslationId, TestTranslation, TestProjectId);
 
         // Assert
-        VerifyErrorWasLogged();
-    }
-
-    private void SetupHttpHandlerForSuccessfulRequest()
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => 
-                    req.Method == HttpMethod.Put && 
-                    req.RequestUri!.ToString().Contains(ExpectedUrl)),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(SuccessResponse);
-    }
-
-    private void VerifyApiWasCalled()
-    {
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Put &&
-                req.RequestUri!.ToString().Contains(ExpectedUrl)),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    private void VerifyRequestBody()
-    {
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Content.ReadAsStringAsync().Result.Equals(ExpectedJsonBody)),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    private void VerifyErrorWasLogged()
-    {
-        VerifyLog(
-            LogLevel.Error, 
-            $"Failed to update translation {TestTranslationId} in Lokalise with new value '{TestTranslation}'"
-        );
+        VerifyLog(LogLevel.Error, $"Failed to update translation {TestTranslationId} in Lokalise with new value '{TestTranslation}'");
     }
 }

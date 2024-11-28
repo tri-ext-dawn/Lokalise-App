@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using AutoFixture;
 using FluentAssertions;
 using Lokalise.ReviewComments.Business.Models;
@@ -35,14 +36,19 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
     public async Task GetTranslations_WhenValidRequestMade_ReturnsExpectedTranslations()
     {
         // Arrange
-        SetupSuccessfulHttpResponse(_defaultTranslation);
+        var content = new LokaliseTranslationsResponse
+        {
+            project_id = DefaultProjectId,
+            translations = new List<TranslationResponse> { _defaultTranslation }
+        };
+        SetupHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(content));
 
         // Act
         var result = await _sut.GetTranslations(DefaultLanguageId, DefaultProjectId);
 
         // Assert
         VerifyTranslationResponse(result, _defaultTranslation);
-        VerifyHttpRequest();
+        VerifyHttpRequest(_expectedUrl, HttpMethod.Get, Times.Once());
     }
 
     [Test]
@@ -50,7 +56,7 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
     public async Task GetTranslations_WhenHttpRequestFails_LogsErrorAndThrowsException()
     {
         // Arrange
-        SetupFailedHttpResponse(HttpStatusCode.InternalServerError);
+        SetupHttpMessageHandler(HttpStatusCode.InternalServerError);
 
         // Act & Assert
         var exception = Assert.ThrowsAsync<HttpRequestException>(
@@ -70,8 +76,7 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
             project_id = DefaultProjectId,
             translations = new List<TranslationResponse>()
         };
-
-        SetupHttpResponseWithContent(emptyResponse);
+        SetupHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(emptyResponse));
 
         // Act
         var result = await _sut.GetTranslations(DefaultLanguageId, DefaultProjectId);
@@ -93,48 +98,6 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
         };
     }
 
-    private void SetupSuccessfulHttpResponse(TranslationResponse translation)
-    {
-        var response = new LokaliseTranslationsResponse
-        {
-            project_id = DefaultProjectId,
-            translations = new List<TranslationResponse> { translation }
-        };
-
-        SetupHttpResponseWithContent(response);
-    }
-
-    private void SetupHttpResponseWithContent<T>(T content)
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(content)
-            });
-    }
-
-    private void SetupFailedHttpResponse(HttpStatusCode statusCode)
-    {
-        _mockHttpMessageHandler
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = statusCode
-            });
-    }
-
     private void VerifyTranslationResponse(IReadOnlyList<Translation> result, TranslationResponse expected)
     {
         result.Should().NotBeNull();
@@ -149,18 +112,6 @@ public class LokaliseApiClientTests_GetTranslations : LokaliseApiClientTests
             IsReviewed = expected.is_reviewed,
             IsUnverified = expected.is_unverified
         });
-    }
-
-    private void VerifyHttpRequest()
-    {
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req =>
-                req.Method == HttpMethod.Get &&
-                req.RequestUri.ToString().Contains(_expectedUrl)),
-            ItExpr.IsAny<CancellationToken>()
-        );
     }
 
     private class LokaliseTranslationsResponse
