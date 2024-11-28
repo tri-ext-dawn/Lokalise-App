@@ -48,7 +48,7 @@ public class WorkflowService : IWorkflowService
 
         var selection = _userInteractionService.ReadNumber(languages.Select(x => x.Id).ToList());
         var selectedLanguage = languages.First(x => x.Id == selection);
-        _logger.LogInformation("Selected language: {languages[selection].Id} {languages[selection].ISO} {languages[selection].Name}", selectedLanguage.Id, selectedLanguage.ISO, selectedLanguage.Name);
+        _logger.LogInformation("Selected language: {LanguageId} {LanguageISO} {LanguageName}", selectedLanguage.Id, selectedLanguage.ISO, selectedLanguage.Name);
         return Task.FromResult(selectedLanguage);
     }
 
