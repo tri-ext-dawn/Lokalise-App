@@ -13,6 +13,10 @@ T\n
 
 TLine 4";
     private string _commentMessage = "<p>CLine 1</p><p>C\\n</p><p></p><p>CLine 4</p>";
+    private string _expectedMessage = @"CLine 1
+C\n
+
+CLine 4";
     private string _projectId = "1234.1234";
     
     [Test]
@@ -84,6 +88,24 @@ TLine 4";
     }
 
     [Test]
+    public async Task ProcessComment_Override_CorrectCommands()
+    {
+        // Arrange
+        var translation = CreateTranslation();
+        var comment = CreateComment(_commentMessage);
+        UserSaidYes();
+        SetUpdateStatus(true);
+        SetResolvedStatus(true);
+
+        // Act
+        var result = await _sut.ProcessComment(comment, translation, _projectId);
+    
+        // Assert
+        _mockCommandService.Verify(x => x.UpdateTranslation(translation.Id, _expectedMessage, _projectId), Times.Once());
+        _mockCommandService.Verify(x => x.ResolveComment(comment.Id, translation.Id, _projectId), Times.Once());
+    }
+
+    [Test]
     public async Task ProcessComment_Override_UpdatesAndResolves()
     {
         // Arrange
@@ -120,7 +142,7 @@ TLine 4";
         VerifyUpdate(Times.Once());
         VerifyResolved(Times.Never());
         _mockUserInteractionService.Verify(x => x.PrintLine($"Failed to update translation {translation.Id}"), Times.Once);
-        VerifyLog(LogLevel.Error, $"Failed to update translation {translation.Id} with message: {translation.TranslationText}");
+        VerifyLog(LogLevel.Error, $"Failed to update translation {translation.Id} with message: {_expectedMessage}");
     }
     
     [Test]

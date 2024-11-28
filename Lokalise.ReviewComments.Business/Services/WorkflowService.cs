@@ -3,6 +3,7 @@ using Lokalise.ReviewComments.Business.Interfaces;
 using Lokalise.ReviewComments.Business.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace Lokalise.ReviewComments.Business.Services;
 
@@ -54,18 +55,22 @@ public class WorkflowService : IWorkflowService
 
     public async Task<bool> ProcessComment(Comment comment, Translation translation, string projectId)
     {
+        var commentLines = GetCommentLines(comment.Message);
+
         _userInteractionService.PrintLine($"Do you want to override: {translation.Id}? (y for yes, any other to skip)");
         PrintTranslation(translation.TranslationText);
-        PrintComment(comment.Message);
+        PrintComment(commentLines);
 
         var input = _userInteractionService.GetCharacterFromUser();
         if (input.KeyChar == 'y')
         {
-            var success = await _commandService.UpdateTranslation(translation.Id, translation.TranslationText, projectId);
+            var message = CreateMessage(commentLines);
+            
+            var success = await _commandService.UpdateTranslation(translation.Id, message, projectId);
             if (success is false)
             {
                 _userInteractionService.PrintLine($"Failed to update translation {translation.Id}");
-                _logger.LogError("Failed to update translation {TranslationId} with message: {translationText}", translation.Id, translation.TranslationText);
+                _logger.LogError("Failed to update translation {TranslationId} with message: {UpdateTranslation}", translation.Id, message);
                 return false;
             }
             
@@ -81,12 +86,22 @@ public class WorkflowService : IWorkflowService
         return true;
     }
 
-    private void PrintComment(string message)
+    private string CreateMessage(List<string> commentLines)
+    {
+        var res = string.Join('\n', commentLines);
+        return res;
+    }
+
+    private List<string> GetCommentLines(string message)
     {
         var regEx = new Regex("(<p>.*?<\\/p>)");
         var matches = regEx.Matches(message);
         var lines = matches.Select(x => x.Value.Substring(3, x.Value.Length - 7)).ToList();
+        return lines;
+    }
 
+    private List<string> PrintComment(List<string> lines)
+    {
         _userInteractionService.PrintLine("");
         _userInteractionService.PrintLine($"Comment:");
         _userInteractionService.PrintLine($"--------------------");
@@ -95,6 +110,7 @@ public class WorkflowService : IWorkflowService
             _userInteractionService.PrintLine(line);
         }
         _userInteractionService.PrintLine($"--------------------");
+        return lines;
     }
 
     private void PrintTranslation(string message)

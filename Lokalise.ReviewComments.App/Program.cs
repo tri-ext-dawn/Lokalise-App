@@ -29,10 +29,4 @@ var host = builder.Build();
 
 // Get service and run
 var app = host.Services.GetRequiredService<IApp>();
-app.Run();
-
-
-var lokalise = new LokaliseClient();
-var comments = await lokalise.GetComments();
-
-await host.RunAsync();
+await app.Run();
