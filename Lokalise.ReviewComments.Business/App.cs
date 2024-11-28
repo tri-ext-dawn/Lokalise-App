@@ -29,11 +29,18 @@ public class App : IApp
     
     public async Task Run()
     {
+        var projectId = "3174716666ba0500034d17.77744948";
+        var languageId = 665;
+        var translationId = 4850905278L;
         
-        var translations = await _dataService.GetTranslations(665, "3174716666ba0500034d17.77744948");
-        var comments = await _dataService.GetComments("3174716666ba0500034d17.77744948");
-        var success = await _commandService.ResolveComment("f19d48cc-ab6c-4377-a308-0c07bc71a035", 4850905278L,
-            "3174716666ba0500034d17.77744948");
+        var translations = await _dataService.GetTranslations(languageId, projectId);
+        var languages = await _dataService.GetLanguages(projectId);
+        var comments = await _dataService.GetComments(projectId);
+
+        var comment = comments.First();
+        var translation = translations.First(x => x.Id == translationId);
+        var updated = await _commandService.UpdateTranslation(translation.Id, comment.Message, projectId);
+        var resolved = await _commandService.ResolveComment(comment.Id, translation.Id, projectId);
         
         throw new NotImplementedException();
     }

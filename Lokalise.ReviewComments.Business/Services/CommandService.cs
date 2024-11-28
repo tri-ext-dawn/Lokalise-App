@@ -15,7 +15,7 @@ public class CommandService : ICommandService
     
     public Task<bool> UpdateTranslation(long translationId, string translation, string projectId)
     {
-        throw new NotImplementedException();
+        return _apiClient.UpdateTranslation(translationId, translation, projectId);
     }
 
     public async Task<bool> ResolveComment(string commentId, long translationId, string projectId)

@@ -19,9 +19,9 @@ public class DataService : IDataService
         return _apiClient.GetTranslations(languageId, projectId);
     }
 
-    public Task<Language> GetLanguages(string projectId)
+    public async Task<List<Language>> GetLanguages(string projectId)
     {
-        throw new NotImplementedException();
+        return await _apiClient.GetLanguages(projectId);
     }
 
     public async Task<List<Comment>> GetComments(string projectId)
