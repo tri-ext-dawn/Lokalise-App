@@ -48,8 +48,12 @@ public class App : IApp
             _userInteractionService.PrintLine("");
             var comment = comments[i];
             var translation = translations.First(t => t.KeyId == comment.KeyId);
-            
+
+            var oldColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
             _userInteractionService.PrintLine($"=== {i+1}/{comments.Count} ===");
+            Console.ForegroundColor = oldColor;
+            
             await _workflowService.ProcessComment(comment, translation, projectId);
         }
     }

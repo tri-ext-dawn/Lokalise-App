@@ -58,7 +58,7 @@ public class WorkflowService : IWorkflowService
     {
         var commentLines = GetCommentLines(comment.Message);
 
-        _userInteractionService.PrintLine($"Do you want to override: {translation.Id}? (y for yes, any other to skip)");
+        _userInteractionService.PrintLine($"Do you want to override: {comment.AttachPointName}? (y for yes, any other to skip)");
         PrintTranslation(translation.TranslationText);
         PrintComment(commentLines);
 
@@ -112,10 +112,13 @@ public class WorkflowService : IWorkflowService
         _userInteractionService.PrintLine("");
         _userInteractionService.PrintLine($"Comment:");
         _userInteractionService.PrintLine($"--------------------");
+        var oldColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Red;
         foreach (var line in lines)
         {
             _userInteractionService.PrintLine(line);
         }
+        Console.ForegroundColor = oldColor;
         _userInteractionService.PrintLine($"--------------------");
     }
 
@@ -126,10 +129,13 @@ public class WorkflowService : IWorkflowService
         _userInteractionService.PrintLine("");
         _userInteractionService.PrintLine($"Translation:");
         _userInteractionService.PrintLine($"--------------------");
+        var oldColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Blue;
         foreach (var line in lines)
         {
             _userInteractionService.PrintLine(line);
         }
+        Console.ForegroundColor = oldColor;
         _userInteractionService.PrintLine($"--------------------");
     }
 }

@@ -31,7 +31,7 @@ CLine 4";
         var result = await _sut.ProcessComment(comment, translation, _projectId);
     
         // Assert
-        _mockUserInteractionService.Verify(x => x.PrintLine($"Do you want to override: {translation.Id}? (y for yes, any other to skip)"), Times.Once);
+        _mockUserInteractionService.Verify(x => x.PrintLine($"Do you want to override: {comment.AttachPointName}? (y for yes, any other to skip)"), Times.Once);
     }
     
     [Test]
