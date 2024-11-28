@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Lokalise.ReviewComments.Business.Interfaces;
 using Lokalise.ReviewComments.Business.Models;
 using Microsoft.Extensions.Logging;
@@ -51,8 +52,41 @@ public class WorkflowService : IWorkflowService
         return Task.FromResult(selectedLanguage);
     }
 
-    public Task<bool> ProcessComment(Comment comment)
+    public Task<bool> ProcessComment(Comment comment, Translation translation)
     {
-        throw new NotImplementedException();
+        _userInteractionService.PrintLine($"Do you want to override: {translation.Id}? (y for yes, any other to skip)");
+        PrintTranslation(translation.TranslationText);
+        PrintComment(comment.Message);
+        return Task.FromResult(true);
+    }
+
+    private void PrintComment(string message)
+    {
+        var regEx = new Regex("(<p>.*?<\\/p>)");
+        var matches = regEx.Matches(message);
+        var lines = matches.Select(x => x.Value.Substring(3, x.Value.Length - 7)).ToList();
+
+        _userInteractionService.PrintLine("");
+        _userInteractionService.PrintLine($"Comment:");
+        _userInteractionService.PrintLine($"--------------------");
+        foreach (var line in lines)
+        {
+            _userInteractionService.PrintLine(line);
+        }
+        _userInteractionService.PrintLine($"--------------------");
+    }
+
+    private void PrintTranslation(string message)
+    {
+        var lines = message.Split('\n');
+        
+        _userInteractionService.PrintLine("");
+        _userInteractionService.PrintLine($"Translation:");
+        _userInteractionService.PrintLine($"--------------------");
+        foreach (var line in lines)
+        {
+            _userInteractionService.PrintLine(line);
+        }
+        _userInteractionService.PrintLine($"--------------------");
     }
 }

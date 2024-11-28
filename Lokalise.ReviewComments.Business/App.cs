@@ -20,11 +20,13 @@ public class App : IApp
     
     private readonly IDataService _dataService;
     private readonly IWorkflowService _workflowService;
+    private readonly IUserInteractionService _userInteractionService;
 
-    public App(IDataService dataService, IWorkflowService workflowService)
+    public App(IDataService dataService, IWorkflowService workflowService, IUserInteractionService userInteractionService)
     {
         _dataService = dataService;
         _workflowService = workflowService;
+        _userInteractionService = userInteractionService;
     }
     
     public async Task Run()
@@ -39,9 +41,13 @@ public class App : IApp
         var allComments = await _dataService.GetComments(projectId);
         var comments = allComments.Where(c => translations.Any(t => t.KeyId == c.KeyId)).ToList();
 
-        foreach (var comment in comments)
+        for (int i = 0; i < comments.Count; i++)
         {
-            await _workflowService.ProcessComment(comment);
+            var comment = comments[i];
+            var translation = translations.First(t => t.KeyId == comment.KeyId);
+            
+            _userInteractionService.PrintLine($"({i+1}/{comments.Count})");
+            await _workflowService.ProcessComment(comment, translation);
         }
     }
 }
