@@ -52,12 +52,33 @@ public class WorkflowService : IWorkflowService
         return Task.FromResult(selectedLanguage);
     }
 
-    public Task<bool> ProcessComment(Comment comment, Translation translation)
+    public async Task<bool> ProcessComment(Comment comment, Translation translation, string projectId)
     {
         _userInteractionService.PrintLine($"Do you want to override: {translation.Id}? (y for yes, any other to skip)");
         PrintTranslation(translation.TranslationText);
         PrintComment(comment.Message);
-        return Task.FromResult(true);
+
+        var input = _userInteractionService.GetCharacterFromUser();
+        if (input.KeyChar == 'y')
+        {
+            var success = await _commandService.UpdateTranslation(translation.Id, translation.TranslationText, projectId);
+            if (success is false)
+            {
+                _userInteractionService.PrintLine($"Failed to update translation {translation.Id}");
+                _logger.LogError("Failed to update translation {TranslationId} with message: {translationText}", translation.Id, translation.TranslationText);
+                return false;
+            }
+            
+            success = await _commandService.ResolveComment(comment.Id, translation.Id, projectId);
+            if (success is false)
+            {
+                _userInteractionService.PrintLine($"Updated translation {translation.Id} but failed to resolve comment {comment.Id}");
+                _logger.LogCritical("Updated translation {TranslationId} but failed to resolve comment {CommentId}", translation.Id, comment.Id);
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     private void PrintComment(string message)

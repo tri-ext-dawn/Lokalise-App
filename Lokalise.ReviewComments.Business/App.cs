@@ -50,7 +50,7 @@ public class App : IApp
             var translation = translations.First(t => t.KeyId == comment.KeyId);
             
             _userInteractionService.PrintLine($"=== {i+1}/{comments.Count} ===");
-            await _workflowService.ProcessComment(comment, translation);
+            await _workflowService.ProcessComment(comment, translation, projectId);
         }
     }
 }
