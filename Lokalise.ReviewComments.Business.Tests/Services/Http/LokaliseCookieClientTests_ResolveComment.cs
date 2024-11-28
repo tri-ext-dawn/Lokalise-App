@@ -31,7 +31,7 @@ public class LokaliseCookieClientTests_ResolveComment : LokaliseCookieClientTest
             )
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.OK
+                StatusCode = HttpStatusCode.NoContent
             });
 
         // Act
@@ -39,18 +39,10 @@ public class LokaliseCookieClientTests_ResolveComment : LokaliseCookieClientTest
 
         // Assert
         Assert.That(result, Is.True);
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Method == HttpMethod.Patch &&
-                req.RequestUri.ToString().Contains($"projects/{ProjectId}/translations/{TranslationId}/comments/{CommentId}")),
-            ItExpr.IsAny<CancellationToken>()
-        );
     }
 
     [Test]
-    public async Task ResolveComment_WhenAlreadyResolved_ReturnsTrue()
+    public async Task ResolveComment_CallCorrectEndpoint()
     {
         // Arrange
         _mockHttpMessageHandler
@@ -62,14 +54,50 @@ public class LokaliseCookieClientTests_ResolveComment : LokaliseCookieClientTest
             )
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.NotModified
+                StatusCode = HttpStatusCode.NoContent
             });
 
         // Act
         var result = await _sut.ResolveComment(CommentId, TranslationId, ProjectId);
 
         // Assert
-        Assert.That(result, Is.True);
+        _mockHttpMessageHandler.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => 
+                req.Method == HttpMethod.Patch &&
+                req.RequestUri.ToString().Contains($"projects/{ProjectId}/translations/{TranslationId}/comments/{CommentId}")),
+            ItExpr.IsAny<CancellationToken>()
+        );
+    }
+
+    [Test]
+    public async Task ResolveComment_CorrectBody()
+    {
+        // Arrange
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent
+            });
+
+        // Act
+        var result = await _sut.ResolveComment(CommentId, TranslationId, ProjectId);
+
+        // Assert
+        _mockHttpMessageHandler.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Content.ReadAsStringAsync().Result.Contains("\"resolved\":true")),
+            ItExpr.IsAny<CancellationToken>()
+        );
     }
 
     [Test]

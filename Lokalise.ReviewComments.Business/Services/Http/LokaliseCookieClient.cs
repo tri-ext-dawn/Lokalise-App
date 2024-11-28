@@ -54,9 +54,8 @@ public class LokaliseCookieClient : ILokaliseCookieClient
         {
             var url = $"projects/{projectId}/translations/{translationId}/comments/{commentId}";
             var body = $$"""{"resolved":true}""";
-            var response = await _client.PatchAsync(url, null);
-            if (response.StatusCode == HttpStatusCode.NotModified)
-                return true;
+            var response = await _client.PatchAsync(url, new StringContent(body, System.Text.Encoding.UTF8, "application/json"));
+
             if (response.IsSuccessStatusCode is false)
             {
                 _logger.LogError("Failed to resolve comment {commentId} for translation {translationId} in Lokalise", commentId, translationId);

@@ -18,8 +18,8 @@ public class CommandService : ICommandService
         throw new NotImplementedException();
     }
 
-    public Task<bool> ResolveComment(string commentId, long translationId, string projectId)
+    public async Task<bool> ResolveComment(string commentId, long translationId, string projectId)
     {
-        throw new NotImplementedException();
+        return await _cookieClient.ResolveComment(commentId, translationId, projectId);
     }
 }
