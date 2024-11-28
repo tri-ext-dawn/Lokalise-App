@@ -30,7 +30,7 @@ public class WorkflowService : IWorkflowService
             _userInteractionService.PrintLine($"[{i}] {project.Key}");;
         }
 
-        var selection = _userInteractionService.ReadNumber();
+        var selection = _userInteractionService.ReadNumber(0, projects.Length);
         var selectedProject = projects[selection];
         _logger.LogInformation("Selected project: {ProjectId}", selectedProject.Value);
         return Task.FromResult(selectedProject.Value);
