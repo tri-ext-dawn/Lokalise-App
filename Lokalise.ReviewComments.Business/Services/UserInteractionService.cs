@@ -16,10 +16,10 @@ public class UserInteractionService : IUserInteractionService
         Console.WriteLine(message);
     }
 
-    public int ReadNumber(int min, int max)
+    public long ReadNumber(long min, long max)
     {
         var input = Console.ReadLine();
-        if(int.TryParse(input, out var number))
+        if(long.TryParse(input, out var number))
         {
             if(number < min || number >= max)
             {
@@ -31,5 +31,22 @@ public class UserInteractionService : IUserInteractionService
         
         PrintLine("Invalid input. Please enter a number.");
         return ReadNumber(min, max);
+    }
+
+    public long ReadNumber(List<long> validValues)
+    {
+        var input = Console.ReadLine();
+        if(long.TryParse(input, out var number))
+        {
+            if(validValues.Contains(number) is false)
+            {
+                PrintLine($"Please enter a valid number.");
+                return ReadNumber(validValues);
+            }
+            return number;
+        }
+        
+        PrintLine("Invalid input. Please enter a number.");
+        return ReadNumber(validValues);
     }
 }

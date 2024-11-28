@@ -38,7 +38,16 @@ public class WorkflowService : IWorkflowService
 
     public Task<Language> SelectLanguage(List<Language> languages)
     {
-        throw new NotImplementedException();
+        _userInteractionService.PrintLine("Select language:");
+        foreach (var language in languages)
+        {
+            _userInteractionService.PrintLine($"[{language.Id}] {language.ISO} {language.Name}");;
+        }
+
+        var selection = _userInteractionService.ReadNumber(languages.Select(x => x.Id).ToList());
+        var selectedLanguage = languages.First(x => x.Id == selection);
+        _logger.LogInformation("Selected language: {languages[selection].Id} {languages[selection].ISO} {languages[selection].Name}", selectedLanguage.Id, selectedLanguage.ISO, selectedLanguage.Name);
+        return Task.FromResult(selectedLanguage);
     }
 
     public Task<bool> ProcessComment(Comment comment)

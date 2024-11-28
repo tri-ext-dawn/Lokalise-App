@@ -34,7 +34,7 @@ public class WorkflowServiceTests_SelectProject : WorkflowServiceTests
         // Arrange
         var projects = _fixture.Create<Dictionary<string, string>>();
         _options.Projects = projects;
-        _mockUserInteractionService.Setup(x => x.ReadNumber(It.IsAny<int>(), It.IsAny<int>())).Returns(selection);
+        _mockUserInteractionService.Setup(x => x.ReadNumber(It.IsAny<long>(), It.IsAny<long>())).Returns(selection);
 
         // Act
         var result = await _sut.SelectProject();
@@ -51,7 +51,7 @@ public class WorkflowServiceTests_SelectProject : WorkflowServiceTests
         // Arrange
         var projects = _fixture.Create<Dictionary<string, string>>();
         _options.Projects = projects;
-        _mockUserInteractionService.Setup(x => x.ReadNumber(It.IsAny<int>(), It.IsAny<int>())).Returns(selection);
+        _mockUserInteractionService.Setup(x => x.ReadNumber(It.IsAny<long>(), It.IsAny<long>())).Returns(selection);
 
         // Act
         var result = await _sut.SelectProject();
@@ -61,12 +61,12 @@ public class WorkflowServiceTests_SelectProject : WorkflowServiceTests
     }
     
     [Test]
-    public async Task SelectProject_ValidSelection_ReturnsSelection()
+    public async Task SelectProject_ValidSelection_CallsReadNumberCorrectly()
     {
         // Arrange
         var projects = _fixture.Create<Dictionary<string, string>>();
         _options.Projects = projects;
-        _mockUserInteractionService.Setup(x => x.ReadNumber(It.IsAny<int>(), It.IsAny<int>())).Returns(0);
+        _mockUserInteractionService.Setup(x => x.ReadNumber(It.IsAny<long>(), It.IsAny<long>())).Returns(0);
 
         // Act
         var result = await _sut.SelectProject();

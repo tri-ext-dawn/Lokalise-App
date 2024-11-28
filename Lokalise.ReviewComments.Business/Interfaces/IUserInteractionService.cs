@@ -4,5 +4,6 @@ public interface IUserInteractionService
 {
     ConsoleKeyInfo GetCharacterFromUser();
     void PrintLine(string message);
-    int ReadNumber(int min, int max);
+    long ReadNumber(long min, long max);
+    long ReadNumber(List<long> validValues);
 }
