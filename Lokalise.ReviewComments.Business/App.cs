@@ -1,4 +1,5 @@
 using Lokalise.ReviewComments.Business.Interfaces;
+using Lokalise.ReviewComments.Business.Models;
 
 namespace Lokalise.ReviewComments.Business;
 
@@ -32,14 +33,15 @@ public class App : IApp
     public async Task Run()
     {
         var projectId = await _workflowService.SelectProject();
-
         _userInteractionService.PrintLine("");
-        var languages = await _dataService.GetLanguages(projectId);
-        var language = await _workflowService.SelectLanguage(languages);
-        
-        var translations = await _dataService.GetTranslations(language.Id, projectId);
-        
+
         var allComments = await _dataService.GetComments(projectId);
+        var languages = await _dataService.GetLanguages(projectId);
+
+        PrintAllComments(allComments, languages);
+
+        var language = await _workflowService.SelectLanguage(languages);
+        var translations = await _dataService.GetTranslations(language.Id, projectId);
         var comments = allComments.Where(c => c.LangId == language.Id && translations.Any(t => t.KeyId == c.KeyId)).ToList();
 
         for (int i = 0; i < comments.Count; i++)
@@ -56,5 +58,30 @@ public class App : IApp
             
             await _workflowService.ProcessComment(comment, translation, projectId);
         }
+    }
+
+    private void PrintAllComments(List<Comment> comments, List<Language> languages)
+    {
+        var byLang = comments.GroupBy(x => x.LangId);
+        foreach (var lang in byLang)
+        {
+            var language = languages.FirstOrDefault(x => x.Id == lang.Key);
+            if(language is not null)
+                _userInteractionService.PrintLine($"Language: {language.ISO} ({lang.Key}) has {lang.Count()} comments");
+        }
+
+        var noLangComments = byLang.FirstOrDefault(x => x.Key.HasValue is false).ToList();
+        var ivarComment = 0;
+        var otherComment = 0;
+        foreach (var comment in noLangComments)
+        {
+            if (comment.Author.UserId == 545675)
+                ivarComment++;
+            else 
+                otherComment++;
+        }
+        
+        _userInteractionService.PrintLine($"<Empty> Language has {ivarComment} comments from Ivar");
+        _userInteractionService.PrintLine($"<Empty> Language has {otherComment} comments from others");
     }
 }
