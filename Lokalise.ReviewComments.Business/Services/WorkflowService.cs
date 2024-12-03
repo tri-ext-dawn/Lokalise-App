@@ -59,6 +59,7 @@ public class WorkflowService : IWorkflowService
         var commentLines = GetCommentLines(comment.Message);
 
         _userInteractionService.PrintLine($"Do you want to override: {comment.AttachPointName}? (y for yes, any other to skip)");
+        _userInteractionService.PrintLine($"Author: {comment.Author.Name}");
         PrintTranslation(translation.TranslationText);
         PrintComment(commentLines);
 

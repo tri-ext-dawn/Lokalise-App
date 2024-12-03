@@ -32,6 +32,7 @@ CLine 4";
     
         // Assert
         _mockUserInteractionService.Verify(x => x.PrintLine($"Do you want to override: {comment.AttachPointName}? (y for yes, any other to skip)"), Times.Once);
+        _mockUserInteractionService.Verify(x => x.PrintLine($"Author: {comment.Author.Name}"), Times.Once);
     }
     
     [Test]
