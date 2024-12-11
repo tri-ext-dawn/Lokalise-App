@@ -1,0 +1,24 @@
+{
+  "IsEncrypted": false,
+  "LokaliseSettings": {
+    "ApiToken": "",
+    "BaseApiUrl": "https://api.lokalise.com/api2/",
+
+    "BaseCookieUrl": "https://app.lokalise.com/collaboration/",
+    "AppDomain": "app.lokalise.com",
+    "XCsrfToken": "",
+    "Cookies": {
+      "PHPSESSID": "",
+      "csrf_token": ""
+    }
+  },
+  "WorkflowSettings": {
+    "Projects": {
+      "App":  "",
+      "Web":  "",
+      "TRI Test": "",
+      "Web Copy": "",
+      "App Copy": ""
+    }
+  }
+}
